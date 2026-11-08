@@ -17,7 +17,7 @@ from math import isfinite
 from pathlib import Path
 
 # West, south, east, north in decimal degrees, matching the raw extractor.
-STUDY_BOUNDS = (1.899402, 41.208051, 2.058360, 41.381086)
+STUDY_BOUNDS = (1.815856, 41.186855, 2.133773, 41.532925)
 DEFAULT_SYNTHETIC_RRHS = 0
 DEFAULT_SEED = 42
 REQUIRED_COLUMNS = {"site_id", "longitude", "latitude", "operator"}

@@ -22,7 +22,7 @@ from urllib.request import urlopen
 
 # Scenario boundaries in decimal degrees: west, south, east, north.
 # The Infoantenas viewer uses ETRS89 (EPSG:4258).
-STUDY_BOUNDS = (1.899402, 41.208051, 2.058360, 41.381086)
+STUDY_BOUNDS = (1.815856, 41.186855, 2.133773, 41.532925)
 TILE_SIZE_DEGREES = 0.04
 
 BASE_URL = "https://geoportal.minetur.gob.es/VCTEL"
