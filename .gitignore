@@ -1,0 +1,30 @@
+# Python caches and build outputs
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Local environments and credentials
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.aws/
+
+# Local editor, agent, and operating-system files
+.idea/
+.vscode/
+.agents/
+.codex/
+.DS_Store
+Thumbs.db
