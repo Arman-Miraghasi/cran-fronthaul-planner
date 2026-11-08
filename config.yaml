@@ -1,0 +1,56 @@
+# Shared settings for the entire pipeline.
+scenario:
+  # West, south, east, north in decimal degrees (ETRS89 / EPSG:4258).
+  study_bounds: [1.815856, 41.186855, 2.133773, 41.532925]
+  synthetic_rrhs: 200
+  seed: 42
+  pool_counts: [5, 10, 15, 20, 25, 30]
+
+paths:
+  # Dataset and results directories are relative to this project, or absolute.
+  dataset_dir: dataset
+  raw_stations_file: stations_raw.csv
+  processed_stations_file: stations_for_simulation.csv
+  results_dir: results
+  # Relative to results_dir, or absolute.
+  figures_dir: figures
+  # Output filenames shared by pool selection and plotting.
+  rrhs_file: scenario_rrhs.csv
+  pools_file: bbu_pools.csv
+  assignments_file: nearest_pool_assignments.csv
+  comparison_file: k_comparison.csv
+  scenario_figure: scenario_without_pools.png
+  placement_figure_template: "scenario_k_{k:02d}.png"
+  distance_summary_figure: distance_vs_k.png
+  distance_distribution_figure: distance_distribution.png
+
+extraction:
+  base_url: https://geoportal.minetur.gob.es/VCTEL
+  api_path: infoantenasGeoJSON.do
+  api_zoom: 4
+  tile_size_degrees: 0.04
+  request_timeout: 25
+  request_attempts: 3
+  request_pause: 0.4
+
+model:
+  earth_radius_km: 6371.0088
+  # Frequency proxies in MHz. The 700 and 800 MHz windows are disjoint.
+  frequency_proxies:
+    4G: [[791, 821], [832, 862]]
+    5G: [[703, 733], [758, 788], [3400, 3800]]
+
+plot:
+  real_color: "#166a98"
+  synthetic_color: "#a75013"
+  pool_color: "#892c60"
+  scenario_figsize: [12, 6.5]
+  chart_figsize: [8.2, 4.8]
+  figure_dpi: 200
+  map_padding_fraction: 0.06
+  map_min_padding_degrees: 0.0001
+  # "auto" uses independent longitude/latitude display scales.
+  map_aspect: auto
+  real_rrh_size: 23
+  synthetic_rrh_size: 29
+  pool_marker_size: 148

@@ -20,19 +20,19 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
 from urllib.request import urlopen
 
-# Scenario boundaries in decimal degrees: west, south, east, north.
-# The Infoantenas viewer uses ETRS89 (EPSG:4258).
-STUDY_BOUNDS = (1.815856, 41.186855, 2.133773, 41.532925)
-TILE_SIZE_DEGREES = 0.04
+from settings import (
+    API_URL,
+    API_ZOOM,
+    BASE_URL,
+    RAW_STATIONS_FILE as OUTPUT_FILE,
+    REQUEST_ATTEMPTS,
+    REQUEST_PAUSE,
+    REQUEST_TIMEOUT,
+    STUDY_BOUNDS,
+    TILE_SIZE_DEGREES,
+)
 
-BASE_URL = "https://geoportal.minetur.gob.es/VCTEL"
-API_URL = f"{BASE_URL}/infoantenasGeoJSON.do"
-API_ZOOM = 4
-REQUEST_TIMEOUT = 25
-REQUEST_ATTEMPTS = 3
-REQUEST_PAUSE = 0.4
 
-OUTPUT_FILE = Path(__file__).resolve().parent / "dataset" / "stations_raw.csv"
 STATION_COLUMNS = (
     "site_id",
     "longitude",

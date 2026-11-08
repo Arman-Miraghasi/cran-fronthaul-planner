@@ -14,10 +14,31 @@ from matplotlib.colors import Normalize
 from matplotlib.patches import Rectangle
 from matplotlib.ticker import MaxNLocator, PercentFormatter, ScalarFormatter
 
-STUDY_BOUNDS = (1.815856, 41.186855, 2.133773, 41.532925)  # west, south, east, north
-REAL_COLOR = "#166a98"
-SYNTHETIC_COLOR = "#a75013"
-POOL_COLOR = "#892c60"
+from settings import (
+    ASSIGNMENTS_FILE,
+    CHART_FIGSIZE,
+    COMPARISON_FILE,
+    DISTANCE_DISTRIBUTION_FIGURE,
+    DISTANCE_SUMMARY_FIGURE,
+    FIGURE_DPI,
+    FIGURES_SUBDIR,
+    MAP_ASPECT,
+    MAP_MIN_PADDING_DEGREES,
+    MAP_PADDING_FRACTION,
+    PLACEMENT_FIGURE_TEMPLATE,
+    POOL_COLOR,
+    POOL_MARKER_SIZE,
+    POOLS_FILE,
+    REAL_COLOR,
+    REAL_RRH_SIZE,
+    RESULTS_DIR,
+    RRHS_FILE,
+    SCENARIO_FIGSIZE,
+    SCENARIO_FIGURE,
+    STUDY_BOUNDS,
+    SYNTHETIC_COLOR,
+    SYNTHETIC_RRH_SIZE,
+)
 
 
 def read_rows(path):
@@ -31,16 +52,16 @@ def point(row):
 
 def read_results(results_dir):
     rrhs = {
-        row["record_id"]: row for row in read_rows(results_dir / "scenario_rrhs.csv")
+        row["record_id"]: row for row in read_rows(results_dir / RRHS_FILE)
     }
     pools = defaultdict(dict)
-    for row in read_rows(results_dir / "bbu_pools.csv"):
+    for row in read_rows(results_dir / POOLS_FILE):
         pools[int(row["k"])][row["pool_id"]] = row
     assignments = defaultdict(list)
-    for row in read_rows(results_dir / "nearest_pool_assignments.csv"):
+    for row in read_rows(results_dir / ASSIGNMENTS_FILE):
         assignments[int(row["k"])].append(row)
     summary = sorted(
-        read_rows(results_dir / "k_comparison.csv"), key=lambda row: int(row["k"])
+        read_rows(results_dir / COMPARISON_FILE), key=lambda row: int(row["k"])
     )
     tested = {int(row["k"]) for row in summary}
     if not rrhs or not tested or tested != pools.keys() or tested != assignments.keys():
@@ -78,12 +99,12 @@ def style_axes(ax):
 
 
 def save_figure(fig, path):
-    fig.savefig(path, dpi=200, facecolor="white")
+    fig.savefig(path, dpi=FIGURE_DPI, facecolor="white")
     plt.close(fig)
 
 
 def plot_scenario(path, rrhs, pools=None, assignments=(), summary=None):
-    fig, ax = plt.subplots(figsize=(12, 6.5))
+    fig, ax = plt.subplots(figsize=SCENARIO_FIGSIZE)
     # Use the same landscape panel for every scenario map.
     fig.subplots_adjust(left=0.09, right=0.97, bottom=0.17, top=0.87)
     style_axes(ax)
@@ -108,12 +129,12 @@ def plot_scenario(path, rrhs, pools=None, assignments=(), summary=None):
         longitudes, latitudes = zip(*coords.values())
         west, east = min(longitudes), max(longitudes)
         south, north = min(latitudes), max(latitudes)
-    pad_x = max(0.06 * (east - west), 0.0001)
-    pad_y = max(0.06 * (north - south), 0.0001)
+    pad_x = max(MAP_PADDING_FRACTION * (east - west), MAP_MIN_PADDING_DEGREES)
+    pad_y = max(MAP_PADDING_FRACTION * (north - south), MAP_MIN_PADDING_DEGREES)
     ax.set_xlim(west - pad_x, east + pad_x)
     ax.set_ylim(south - pad_y, north + pad_y)
     # Fill the panel with independent longitude and latitude display scales.
-    ax.set_aspect("auto")
+    ax.set_aspect(MAP_ASPECT)
     for axis in (ax.xaxis, ax.yaxis):
         axis.set_major_locator(MaxNLocator(nbins=5))
         axis.set_major_formatter(ScalarFormatter(useOffset=False))
@@ -134,7 +155,7 @@ def plot_scenario(path, rrhs, pools=None, assignments=(), summary=None):
     scatter_locations(
         ax,
         real,
-        s=23,
+        s=REAL_RRH_SIZE,
         color=REAL_COLOR,
         linewidths=0,
         zorder=3,
@@ -143,7 +164,7 @@ def plot_scenario(path, rrhs, pools=None, assignments=(), summary=None):
     scatter_locations(
         ax,
         synthetic,
-        s=29,
+        s=SYNTHETIC_RRH_SIZE,
         marker="D",
         facecolors="none",
         edgecolors=SYNTHETIC_COLOR,
@@ -159,7 +180,7 @@ def plot_scenario(path, rrhs, pools=None, assignments=(), summary=None):
         scatter_locations(
             ax,
             real_pools,
-            s=148,
+            s=POOL_MARKER_SIZE,
             marker="*",
             color=POOL_COLOR,
             edgecolors="white",
@@ -170,7 +191,7 @@ def plot_scenario(path, rrhs, pools=None, assignments=(), summary=None):
         scatter_locations(
             ax,
             synthetic_pools,
-            s=148,
+            s=POOL_MARKER_SIZE,
             marker="*",
             facecolors="white",
             edgecolors=POOL_COLOR,
@@ -194,7 +215,7 @@ def plot_scenario(path, rrhs, pools=None, assignments=(), summary=None):
 
 
 def plot_distance_summary(path, summary):
-    fig, ax = plt.subplots(figsize=(8.2, 4.8), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=CHART_FIGSIZE, constrained_layout=True)
     style_axes(ax)
     ks = [int(row["k"]) for row in summary]
     for column, label, color, marker in (
@@ -227,7 +248,7 @@ def plot_distance_summary(path, summary):
 
 
 def plot_distance_distribution(path, assignments, ks):
-    fig, ax = plt.subplots(figsize=(8.2, 4.8), constrained_layout=True)
+    fig, ax = plt.subplots(figsize=CHART_FIGSIZE, constrained_layout=True)
     style_axes(ax)
     distances = {
         k: sorted(float(row["distance_km"]) for row in assignments[k]) for k in ks
@@ -267,23 +288,28 @@ def plot_distance_distribution(path, assignments, ks):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--results-dir", type=Path, default=Path("results"))
+    parser.add_argument("--results-dir", type=Path, default=RESULTS_DIR)
+    parser.add_argument(
+        "--figures-dir", type=Path,
+        help="Override the configured figure output directory",
+    )
     args = parser.parse_args()
     try:
         rrhs, pools, assignments, summary = read_results(args.results_dir)
-        figures = args.results_dir / "figures"
-        figures.mkdir(exist_ok=True)
-        plot_scenario(figures / "scenario_without_pools.png", rrhs)
+        figures = args.figures_dir or args.results_dir / FIGURES_SUBDIR
+        figures.mkdir(parents=True, exist_ok=True)
+        plot_scenario(figures / SCENARIO_FIGURE, rrhs)
         ks = []
         for row in summary:
             k = int(row["k"])
             ks.append(k)
             plot_scenario(
-                figures / f"scenario_k_{k:02d}.png", rrhs, pools[k], assignments[k], row
+                figures / PLACEMENT_FIGURE_TEMPLATE.format(k=k),
+                rrhs, pools[k], assignments[k], row,
             )
-        plot_distance_summary(figures / "distance_vs_k.png", summary)
+        plot_distance_summary(figures / DISTANCE_SUMMARY_FIGURE, summary)
         plot_distance_distribution(
-            figures / "distance_distribution.png", assignments, ks
+            figures / DISTANCE_DISTRIBUTION_FIGURE, assignments, ks
         )
     except (OSError, KeyError, ValueError, csv.Error) as error:
         parser.exit(1, f"Plotting failed. {error}\n")

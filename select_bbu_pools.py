@@ -8,12 +8,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from statistics import mean
 
-EARTH_RADIUS_KM = 6371.0088
-RRHS_FILE = "scenario_rrhs.csv"
-POOLS_FILE = "bbu_pools.csv"
-ASSIGNMENTS_FILE = "nearest_pool_assignments.csv"
-COMPARISON_FILE = "k_comparison.csv"
-RESULTS_FILES = (RRHS_FILE, POOLS_FILE, ASSIGNMENTS_FILE, COMPARISON_FILE)
+from settings import (
+    ASSIGNMENTS_FILE,
+    COMPARISON_FILE,
+    DEFAULT_K_VALUES,
+    EARTH_RADIUS_KM,
+    POOLS_FILE,
+    PROCESSED_STATIONS_FILE,
+    RESULTS_DIR,
+    RESULTS_FILES,
+    RRHS_FILE,
+)
 
 
 @dataclass(frozen=True)
@@ -183,20 +188,18 @@ def main():
         "input",
         type=Path,
         nargs="?",
-        default=Path(__file__).resolve().parent
-        / "dataset"
-        / "stations_for_simulation.csv",
+        default=PROCESSED_STATIONS_FILE,
     )
     parser.add_argument(
         "--k",
         type=int,
         nargs="+",
-        required=True,
-        help="Pool counts, e.g. --k 1 2 3 5 10",
+        default=DEFAULT_K_VALUES,
+        help=f"Pool counts (default: {' '.join(map(str, DEFAULT_K_VALUES))})",
     )
-    parser.add_argument("--results-dir", type=Path, default=Path("results"))
+    parser.add_argument("--results-dir", type=Path, default=RESULTS_DIR)
     args = parser.parse_args()
-    if min(args.k) < 1:
+    if not args.k or min(args.k) < 1:
         parser.error("Each K must be a positive integer.")
 
     try:

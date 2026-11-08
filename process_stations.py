@@ -16,10 +16,16 @@ from collections import Counter
 from math import isfinite
 from pathlib import Path
 
-# West, south, east, north in decimal degrees, matching the raw extractor.
-STUDY_BOUNDS = (1.815856, 41.186855, 2.133773, 41.532925)
-DEFAULT_SYNTHETIC_RRHS = 0
-DEFAULT_SEED = 42
+from settings import (
+    DEFAULT_SEED,
+    DEFAULT_SYNTHETIC_RRHS,
+    FREQUENCY_PROXIES,
+    PROCESSED_STATIONS_FILE,
+    RAW_STATIONS_FILE,
+    STUDY_BOUNDS,
+)
+
+
 REQUIRED_COLUMNS = {"site_id", "longitude", "latitude", "operator"}
 OUTPUT_COLUMNS = (
     "record_id",
@@ -43,14 +49,6 @@ RADIO_NAMES = {
 MISSING_LABELS = {"", "unknown", "desconocido", "null", "none", "n/a", "sin datos"}
 LABEL_SEPARATOR = re.compile(r"[,;/|+&]+|\b(?:and|y)\b", re.IGNORECASE)
 FREQUENCY_RANGE = re.compile(r"(\d+(?:[.,]\d+)?)\s*[-–—−]\s*(\d+(?:[.,]\d+)?)")
-
-# Frequency proxies in MHz for this scenario. The 700 and 800 MHz windows
-# are disjoint so one assigned interval cannot trigger both labels.
-FREQUENCY_PROXIES = {
-    "4G": ((791, 821), (832, 862)),
-    "5G": ((703, 733), (758, 788), (3400, 3800)),
-}
-
 
 def generation_for_label(label):
     name = re.sub(r"[^a-z0-9]", "", label.casefold())
@@ -260,7 +258,7 @@ def main():
         "input",
         nargs="?",
         type=Path,
-        default=Path(__file__).resolve().parent / "dataset" / "stations_raw.csv",
+        default=RAW_STATIONS_FILE,
     )
     parser.add_argument("--output", type=Path, help="Path for the processed CSV")
     parser.add_argument(
@@ -278,7 +276,11 @@ def main():
     args = parser.parse_args()
     if args.synthetic < 0:
         parser.error("--synthetic must be zero or greater.")
-    output_path = args.output or args.input.with_name("stations_for_simulation.csv")
+    output_path = args.output or (
+        PROCESSED_STATIONS_FILE
+        if args.input.resolve() == RAW_STATIONS_FILE.resolve()
+        else args.input.with_name(PROCESSED_STATIONS_FILE.name)
+    )
     if args.input.resolve() == output_path.resolve():
         parser.error("Choose an output path different from the raw CSV.")
 
