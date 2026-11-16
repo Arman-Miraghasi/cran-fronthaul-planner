@@ -4,7 +4,24 @@ scenario:
   study_bounds: [1.815856, 41.186855, 2.133773, 41.532925]
   synthetic_rrhs: 200
   seed: 42
-  pool_counts: [5, 10, 15, 20, 25, 30]
+
+min_delay:
+  max_round_trip_delay_us: 200
+  propagation_speed_m_per_s: 300000000
+  max_link_distance_km: 4.5
+  # Test this K first. If feasible, decrease one by one until the first failure;
+  # otherwise increase one by one until feasible. All tested Ks are plotted.
+  candidate_pool_count: 30
+
+traffic_profiles:
+  mode: random  # Use random or geographic.
+  random_percentages:
+    residential: 20
+    office: 30
+    mixed: 50
+  # For geographic mode, add entries with profile and bounds [west, south, east, north].
+  # The first matching zone applies. RRHs outside all zones are labelled mixed.
+  geographic_zones: []
 
 paths:
   # Dataset and results directories are relative to this project, or absolute.
@@ -12,6 +29,8 @@ paths:
   raw_stations_file: stations_raw.csv
   processed_stations_file: stations_for_simulation.csv
   results_dir: results
+  # Relative to results_dir.
+  min_delay_subdir: min_delay_from_30
   # Relative to results_dir, or absolute.
   figures_dir: figures
   # Output filenames shared by pool selection and plotting.

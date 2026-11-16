@@ -1,7 +1,7 @@
 """Prepare stations_raw.csv for the C-RAN simulator.
 
 The output contains classified real station records and optional synthetic
-RRHs within STUDY_BOUNDS.
+RRHs within STUDY_BOUNDS, each with a configured traffic profile.
 Explicit technology labels take precedence. When labels are missing, the
 project's frequency rules produce estimates marked frequency_inferred.
 """
@@ -23,8 +23,11 @@ from settings import (
     PROCESSED_STATIONS_FILE,
     RAW_STATIONS_FILE,
     STUDY_BOUNDS,
+    TRAFFIC_GEOGRAPHIC_ZONES,
+    TRAFFIC_PROFILE_MODE,
+    TRAFFIC_PROFILE_TYPES,
+    TRAFFIC_RANDOM_PERCENTAGES,
 )
-
 
 REQUIRED_COLUMNS = {"site_id", "longitude", "latitude", "operator"}
 OUTPUT_COLUMNS = (
@@ -38,6 +41,7 @@ OUTPUT_COLUMNS = (
     "supported_technologies",
     "frequency_bands_mhz",
     "is_synthetic",
+    "traffic_profile",
 )
 
 RADIO_NAMES = {
@@ -49,6 +53,7 @@ RADIO_NAMES = {
 MISSING_LABELS = {"", "unknown", "desconocido", "null", "none", "n/a", "sin datos"}
 LABEL_SEPARATOR = re.compile(r"[,;/|+&]+|\b(?:and|y)\b", re.IGNORECASE)
 FREQUENCY_RANGE = re.compile(r"(\d+(?:[.,]\d+)?)\s*[-–—−]\s*(\d+(?:[.,]\d+)?)")
+
 
 def generation_for_label(label):
     name = re.sub(r"[^a-z0-9]", "", label.casefold())
@@ -229,6 +234,28 @@ def generate_synthetic_rrhs(count, seed):
         }
 
 
+def assign_traffic_profiles(rrhs, seed):
+    """Label real and synthetic RRH records using the configured traffic mode."""
+    if TRAFFIC_PROFILE_MODE == "random":
+        # Keep the traffic draws independent of the synthetic coordinate draws.
+        rng = random.Random(f"traffic_profiles:{seed}")
+        weights = [
+            TRAFFIC_RANDOM_PERCENTAGES[profile] for profile in TRAFFIC_PROFILE_TYPES
+        ]
+        profiles = rng.choices(TRAFFIC_PROFILE_TYPES, weights=weights, k=len(rrhs))
+        for rrh, profile in zip(rrhs, profiles):
+            rrh["traffic_profile"] = profile
+        return
+
+    for rrh in rrhs:
+        longitude, latitude = rrh["longitude"], rrh["latitude"]
+        rrh["traffic_profile"] = "mixed"
+        for profile, (west, south, east, north) in TRAFFIC_GEOGRAPHIC_ZONES:
+            if west <= longitude <= east and south <= latitude <= north:
+                rrh["traffic_profile"] = profile
+                break
+
+
 def write_csv(stations, output_path):
     output_path.parent.mkdir(parents=True, exist_ok=True)
     temporary_path = None
@@ -271,7 +298,7 @@ def main():
         "--seed",
         type=int,
         default=DEFAULT_SEED,
-        help=f"Random seed for synthetic placement (default: {DEFAULT_SEED})",
+        help=f"Random seed for synthetic placement and traffic profiles (default: {DEFAULT_SEED})",
     )
     args = parser.parse_args()
     if args.synthetic < 0:
@@ -289,7 +316,9 @@ def main():
         groups = read_stations(args.input, counts)
         stations = classify_stations(groups, counts)
         synthetic = list(generate_synthetic_rrhs(args.synthetic, args.seed))
-        write_csv(stations + synthetic, output_path)
+        rrhs = stations + synthetic
+        assign_traffic_profiles(rrhs, args.seed)
+        write_csv(rrhs, output_path)
     except (OSError, ValueError, csv.Error) as error:
         parser.exit(1, f"Processing failed. {error}\n")
 
@@ -313,6 +342,10 @@ def main():
         station["technology_source"] == "frequency_inferred" for station in stations
     )
     print(f"Frequency-inferred records {inferred}")
+    traffic_counts = Counter(rrh["traffic_profile"] for rrh in rrhs)
+    print(f"Traffic profiles ({TRAFFIC_PROFILE_MODE} mode):")
+    for profile in TRAFFIC_PROFILE_TYPES:
+        print(f"  {profile}: {traffic_counts[profile]}")
     print(f"Saved {output_path.resolve()}")
 
 

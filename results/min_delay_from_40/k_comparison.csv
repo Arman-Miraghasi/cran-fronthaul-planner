@@ -1,0 +1,3 @@
+﻿stage,k,rrh_count,served_count,unserved_count,coverage_percent,max_km,p95_km,mean_km,max_served_rtt_us,max_link_distance_km,max_round_trip_delay_us,propagation_speed_m_per_s
+initial,40,1220,1220,0,100.0,4.047500526267339,3.5156760770656894,2.0941051618682036,26.98333684178226,4.5,200,300000000
+final,35,1220,1220,0,100.0,4.368221324683764,3.622042949443188,2.193393086220444,29.12147549789176,4.5,200,300000000
