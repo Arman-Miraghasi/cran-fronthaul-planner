@@ -135,8 +135,6 @@ Categories are recalculated for each stage:
 2. **Optimal pool with alternatives:** this pool is the closest choice, and other feasible pools exist.
 3. **Feasible but not optimal:** this pool is a backup; another pool is the closest choice.
 
-There are no charts in the Excel workbook. `pool_categories.csv` is no longer generated; plotting reads category counts from the workbook's Summary sheet.
-
 ### Figures
 
 The `figures/` subdirectory contains:
@@ -179,15 +177,6 @@ py -3 plot_bbu_results.py --results-dir results/min_delay_from_40
 
 Use the same results directory for selection and plotting. Processing accepts a positional raw CSV, `--output`, `--synthetic`, and `--seed`. Selection accepts a positional processed CSV. Plotting accepts `--figures-dir`. A custom processing input writes the configured processed filename beside that input unless `--output` is supplied.
 
-The earlier distance-only comparison remains available explicitly:
-
-```powershell
-py -3 select_bbu_pools.py --k 5 10 15 20 25 30 --results-dir results/distance_only
-py -3 plot_bbu_results.py --results-dir results/distance_only
-```
-
-`--k` runs the earlier distance-only comparison; it does not perform the minimum-delay search or generate its workbook. It cannot be combined with `--candidate-pools`.
-
 ## Tests and result validation
 
 Run the offline tests:
@@ -211,7 +200,3 @@ py -3 tests/validate_phase_results.py --results-dir results/min_delay_from_40 --
 ```
 
 The audit independently recalculates distances, feasible links, optimal assignments, coverage, category counts, and consecutive-K transitions. It verifies the Excel lists and summary totals, absence of workbook charts, and expected figure files.
-
-## Model limits
-
-Distances are great-circle distances. Delay includes propagation only at one configured speed. The model does not account for routed fibre distance, processing/queuing delay, terrain, radio line of sight, link budget, or pool capacity. Traffic profiles label RRHs but do not affect minimum-delay assignment in this phase. Frequency-derived technology classifications are estimates.
